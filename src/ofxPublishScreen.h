@@ -13,7 +13,7 @@ namespace ofxPublishScreen {
 		Publisher() : thread(NULL) {}
 		virtual ~Publisher() { dispose(); }
 		
-		void setup(int port, int jpeg_quality = 90);
+		void setup(int port, int jpeg_quality = 90, int que_max=0);
 		void dispose();
 		
 		void publishScreen();
@@ -32,6 +32,7 @@ namespace ofxPublishScreen {
 		
 		class Thread;
 		Thread *thread;
+		int queMax=0;
 	};
 	
 	class Subscriber

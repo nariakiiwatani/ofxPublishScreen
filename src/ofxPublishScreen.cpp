@@ -8,7 +8,7 @@ class ofxPublishScreen::Publisher::Thread : public ofThread
 {
 public:
 
-	Thread(string host, int jpeg_quality) : last_pubs_time(0), pubs_fps(0), compress_time_ms(0), jpeg_quality(jpeg_quality)
+	Thread(string host, int jpeg_quality, int que_max) : last_pubs_time(0), pubs_fps(0), compress_time_ms(0), jpeg_quality(jpeg_quality), que_max(que_max)
 	{
 		pub.setHighWaterMark(1);
 		pub.bind(host);
@@ -20,6 +20,9 @@ public:
 		
 		if (lock())
 		{
+			while(que_max > 0 && que_max <= frames.size()) {
+				frames.pop();
+			}
 			frames.push(p);
 			unlock();
 		}
@@ -41,6 +44,7 @@ protected:
 	
 	float pubs_fps;
 	float last_pubs_time;
+	int que_max;
 	
 	float compress_time_ms;
 	
@@ -81,14 +85,14 @@ protected:
 	}
 };
 
-void ofxPublishScreen::Publisher::setup(int port, int jpeg_quality)
+void ofxPublishScreen::Publisher::setup(int port, int jpeg_quality, int que_max)
 {
 	dispose();
 
 	char buf[256];
 	sprintf(buf, "tcp://*:%i", port);
 
-	thread = new Thread(buf, jpeg_quality);
+	thread = new Thread(buf, jpeg_quality, que_max);
 	thread->startThread();
 	
 	ofAddListener(ofEvents().exit, this, &Publisher::onExit);
