@@ -27,7 +27,7 @@ public:
 
 	float getFps() { return pubs_fps; }
 	
-	int getJpegQuality() { return jpeg_quality; }
+	int getJpegQuality() const { return jpeg_quality; }
 	void setJpegQuality(int v) { jpeg_quality = v; }
 
 protected:
@@ -48,38 +48,35 @@ protected:
 	{
 		while (isThreadRunning())
 		{
-			while (isThreadRunning())
+			lock();
+			if (frames.empty())
 			{
-				lock();
-				if (frames.empty())
-				{
-					sleep(1);
-					unlock();
-					continue;
-				}
-				
-				PixelsRef pix = frames.front();
-				frames.pop();
+				sleep(1);
 				unlock();
-
-				ofBuffer data;
-
-				{
-					float comp_start = ofGetElapsedTimeMillis();
-					jpeg.save(data, *pix.get(),  jpeg_quality);
-					float d = ofGetElapsedTimeMillis() - comp_start;
-					compress_time_ms += (d - compress_time_ms) * 0.1;
-				}
-				
-				pub.send(data, true);
-				
-				float t = ofGetElapsedTimef();
-				float d = t - last_pubs_time;
-				d = 1. / d;
-				
-				pubs_fps += (d - pubs_fps) * 0.1;
-				last_pubs_time = t;
+				continue;
 			}
+			
+			PixelsRef pix = frames.front();
+			frames.pop();
+			unlock();
+
+			ofBuffer data;
+
+			{
+				float comp_start = ofGetElapsedTimeMillis();
+				jpeg.save(data, *pix.get(),  jpeg_quality);
+				float d = ofGetElapsedTimeMillis() - comp_start;
+				compress_time_ms += (d - compress_time_ms) * 0.1;
+			}
+			
+			pub.send(data, true);
+			
+			float t = ofGetElapsedTimef();
+			float d = t - last_pubs_time;
+			d = 1. / d;
+			
+			pubs_fps += (d - pubs_fps) * 0.1;
+			last_pubs_time = t;
 		}
 	}
 };
@@ -118,7 +115,7 @@ void ofxPublishScreen::Publisher::publishScreen()
 	tex.allocate(w, h, GL_RGB);
 	tex.loadScreenData(0, 0, w, h);
 
-	publishTexture(&tex);
+	publishTexture(tex);
 
 	tex.clear();
 }
@@ -128,14 +125,22 @@ void ofxPublishScreen::Publisher::publishPixels(const ofPixels &pix)
 	thread->pushImage(pix);
 }
 
-void ofxPublishScreen::Publisher::publishTexture(ofTexture* inputTexture)
+void ofxPublishScreen::Publisher::publishTexture(ofTexture &inputTexture)
 {
 	ofPixels pix;
-	inputTexture->readToPixels(pix);
+	inputTexture.readToPixels(pix);
 	publishPixels(pix);
 }
 
-int ofxPublishScreen::Publisher::getJpegQuality()
+void ofxPublishScreen::Publisher::publishFbo(ofFbo &fbo)
+{
+	ofPixels pix;
+	fbo.readToPixels(pix);
+	publishPixels(pix);
+}
+
+
+int ofxPublishScreen::Publisher::getJpegQuality() const
 {
 	return thread->getJpegQuality();
 }
@@ -150,7 +155,7 @@ void ofxPublishScreen::Publisher::onExit(ofEventArgs&)
 	dispose();
 }
 
-float ofxPublishScreen::Publisher::getFps()
+float ofxPublishScreen::Publisher::getFps() const
 {
 	return thread->getFps();
 }
@@ -189,7 +194,7 @@ public:
 			if (data.size())
 			{
 				ofPixels temp;
-				if (jpeg.load(data, temp))
+				if (jpeg.load(temp, data))
 				{
 					lock();
 					pix = temp;
@@ -208,7 +213,7 @@ public:
 		}
 	}
 	
-	float getFps()
+	float getFps() const
 	{
 		return subs_fps;
 	}
@@ -254,7 +259,7 @@ void ofxPublishScreen::Subscriber::update()
 	}
 }
 
-float ofxPublishScreen::Subscriber::getFps()
+float ofxPublishScreen::Subscriber::getFps() const
 {
 	return thread->getFps();	
 }

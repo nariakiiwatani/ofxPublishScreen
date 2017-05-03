@@ -18,11 +18,12 @@ namespace ofxPublishScreen {
 		
 		void publishScreen();
 		void publishPixels(const ofPixels &pix);
-		void publishTexture(ofTexture* inputTexture);
+		void publishTexture(ofTexture &inputTexture);
+		void publishFbo(ofFbo &fbo);
 		
-		float getFps();
+		float getFps() const;
 		
-		int getJpegQuality();
+		int getJpegQuality() const;
 		void setJpegQuality(int v);
 		
 		void onExit(ofEventArgs&);
@@ -46,9 +47,10 @@ namespace ofxPublishScreen {
 		void update();
 
 		bool isFrameNew() { return is_frame_new; }
-		const ofPixelsRef getPixelsRef() { return pix; }
+		ofPixelsRef getPixelsRef() { return pix; }
+		ofImage& getImage() { return pix; }
 		
-		float getFps();
+		float getFps() const;
 		
 	protected:
 		
@@ -88,18 +90,18 @@ namespace ofxPublishScreen {
 		void begin()
 		{
 			fbo.begin();
-			ofFloatColor bg = ofGetCurrentRenderer()->getBgColor();
+			ofFloatColor bg = ofGetCurrentRenderer()->getBackgroundColor();
 			ofClear(bg.r * 255, bg.g * 255, bg.b * 255);
 		}
 		
 		void end()
 		{
 			fbo.end();
-			publishTexture(&fbo.getTextureReference());
+			publishFbo(fbo);
 		}
 		
-		float getWidth() { return fbo.getWidth(); }
-		float getHeight() { return fbo.getHeight(); }
+		float getWidth() const { return fbo.getWidth(); }
+		float getHeight() const { return fbo.getHeight(); }
 		
 		ofFbo& getFbo() { return fbo; }
 		
