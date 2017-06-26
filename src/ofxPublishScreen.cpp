@@ -10,7 +10,7 @@ public:
 
 	Thread(string host, int jpeg_quality, int que_max) : last_pubs_time(0), pubs_fps(0), compress_time_ms(0), jpeg_quality(jpeg_quality), que_max(que_max)
 	{
-		pub.setHighWaterMark(1);
+		pub.setHighWaterMark(que_max);
 		pub.bind(host);
 	}
 
